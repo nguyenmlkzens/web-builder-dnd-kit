@@ -25,7 +25,7 @@ const ReactBuilder = () => {
   ]);
 
   const [canvas, setCanvas] = useState([]);
-  const [draggedItem, setDraggedItem] = useState(null);
+  const [, setDraggedItem] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [isGridView, setIsGridView] = useState(false);
   const [gridSize, setGridSize] = useState({ columns: 2, rows: 2 });
@@ -91,13 +91,35 @@ const ReactBuilder = () => {
     }
   };
 
-  const handleDragEnd = () => {
+  const removeItem = (id) => {
+    setCanvas((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleDragStartCanvas = (e, index) => {
+    e.dataTransfer.setData("canvasIndex", index);
+    setDraggedItem(index);
+  };
+
+  const handleDropCanvas = (e, targetIndex) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData("canvasIndex"), 10);
+
+    if (sourceIndex !== targetIndex) {
+      setCanvas((prev) => {
+        const newCanvas = [...prev];
+        const [movedItem] = newCanvas.splice(sourceIndex, 1);
+        newCanvas.splice(targetIndex, 0, movedItem);
+        return newCanvas;
+      });
+    }
+
     setDraggedItem(null);
     setDragOverIndex(null);
   };
 
-  const removeItem = (id) => {
-    setCanvas((prev) => prev.filter((item) => item.id !== id));
+  const handleDragOverCanvas = (e, index) => {
+    e.preventDefault();
+    setDragOverIndex(index);
   };
 
   return (
@@ -204,8 +226,10 @@ const ReactBuilder = () => {
                         ? "border-t-2 border-blue-500"
                         : ""
                     }`}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDrop={(e) => handleDrop(e, index)}
+                    draggable
+                    onDragStart={(e) => handleDragStartCanvas(e, index)}
+                    onDragOver={(e) => handleDragOverCanvas(e, index)}
+                    onDrop={(e) => handleDropCanvas(e, index)}
                   >
                     <div className="bg-white p-3 mb-2 rounded shadow-sm border border-gray-200">
                       {item.content}
